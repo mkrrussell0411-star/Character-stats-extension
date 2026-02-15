@@ -66,10 +66,13 @@ npm install
    - `INSTALL.md`
 4. Restart SillyTavern
 
-### Method 3: Download from SillyTavern Menu
+### Method 3: Install From SillyTavern Extension Installer
 - Open SillyTavern
-- Go to Extensions → Download Extensions & Assets
-- Search for "Character Stats & Growth"
+- Go to Extensions → Install extension
+- Put this in the box:
+  ```
+  https://github.com/mkrrussell0411-star/Character-stats-extension
+  ```
 - Click Install
 
 **For official SillyTavern extension documentation, see:** https://docs.sillytavern.app/for-contributors/writing-extensions/
