@@ -9,11 +9,9 @@ A powerful SillyTavern extension that enables comprehensive character stat track
 - Stats are organized into four categories: Physical, Mental, Skills, and Other
 - Support for both numeric and text values
 - Remove stats individually as needed
-- Per-character stat storage (each character has independent stats)
 
 ### 📈 Growth Mechanics
 - Grow all numeric stats by a percentage with a single click
-- Track growth history per character
 - Flexible growth percentage (5%, 10%, 15%, custom)
 - Automatic stat updates across all numeric values
 
@@ -35,12 +33,9 @@ A powerful SillyTavern extension that enables comprehensive character stat track
 - Seamless integration with SillyTavern's prompt system
 
 ### 🎨 User Interface
-- Floating stats panel (bottom-right corner, minimizable)
-- Collapsible/expandable interface
-- Color-coded stat categories
+- Floating stats panel (top-left corner, minimizable)
 - Responsive design for mobile devices
 - Light/dark mode support
-- **NEW**: Minimize button to save screen space
 
 ## Installation
 
@@ -85,19 +80,18 @@ npm install
 4. Click **+ Stat** to add your first stat
 5. Enter stat name (e.g., "height", "strength")
 6. Enter the value (e.g., 6, 18)
-7. Stats appear organized by category in the panel
 
 ### Adding Stats
 - Click **+ Stat**
 - Enter the stat name (spaces will be converted to underscores)
 - Enter the value (can be a number or text)
+- Enter Unit Of Measurment (optional)
 
 ### Growing Stats
 1. Click **Grow Stats**
 2. Enter growth percentage (e.g., 5 for 5% growth)
 3. All numeric stats increase by that percentage
 4. Text-based stats are unaffected
-5. Growth is logged to history
 
 Example:
 ```
