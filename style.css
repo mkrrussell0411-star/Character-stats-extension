@@ -1,0 +1,77 @@
+/* Root container */
+#cs-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Toggle button */
+#cs-toggle {
+  position: absolute;
+  top: 84px;
+  left: 12px;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(20,20,20,0.60);
+  backdrop-filter: blur(10px);
+
+  color: rgba(255,255,255,0.9);
+  font-size: 16px;
+  cursor: pointer;
+
+  pointer-events: auto;
+}
+
+#cs-toggle:hover {
+  border-color: rgba(255,255,255,0.16);
+}
+
+/* Panel */
+#cs-panel {
+  position: absolute;
+
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  left: 56px;
+
+  width: 330px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(16,16,16,0.78);
+  backdrop-filter: blur(14px);
+
+  box-shadow: 0 14px 44px rgba(0,0,0,0.45);
+
+  overflow: hidden;
+
+  transform: translateX(-400px);
+  opacity: 0;
+  transition: transform 160ms ease, opacity 160ms ease;
+
+  pointer-events: auto;
+}
+
+#cs-root.open #cs-panel {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Mobile tweaks */
+@media (max-width: 520px) {
+  #cs-panel {
+    left: 12px;
+    width: min(92vw, 360px);
+  }
+  #cs-toggle {
+    left: 10px;
+  }
+}

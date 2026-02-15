@@ -1,0 +1,29 @@
+{
+  "name": "character-stats-extension",
+  "version": "1.0.0",
+  "description": "A SillyTavern extension for tracking character stats with growth mechanics and real-world scale comparisons",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'No build step required - using vanilla JS'",
+    "dev": "echo 'Development mode - edit files directly'",
+    "lint": "eslint index.js --fix || true"
+  },
+  "keywords": [
+    "sillytavern",
+    "extension",
+    "stats",
+    "character",
+    "growth",
+    "scale",
+    "tracking"
+  ],
+  "author": "Your Name",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/character-stats-extension"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  }
+}

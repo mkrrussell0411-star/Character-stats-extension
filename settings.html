@@ -1,0 +1,228 @@
+<div id="character-stats-settings">
+  <div class="extension-settings-block">
+    <div class="inline-drawer">
+      <div class="inline-drawer-toggle inline-drawer-header">
+        <b>⚙️ Character Stats & Growth Settings</b>
+        <div class="inline-drawer-icon">
+          <ArrowUpIcon />
+        </div>
+      </div>
+      <div class="inline-drawer-content">
+        <div class="settings-section">
+          <div class="settings-content">
+            <h4>About This Extension</h4>
+            <p>
+              The Character Stats & Growth extension allows you to track and
+              manage character statistics with the following features:
+            </p>
+            <ul>
+              <li>
+                <strong>Track Stats:</strong> Add any custom stats (height,
+                weight, strength, health, etc.)
+              </li>
+              <li>
+                <strong>Organize Stats:</strong> Automatically categorized into
+                Physical, Mental, Skills, and Other
+              </li>
+              <li>
+                <strong>Growth System:</strong> Grow all numeric stats by a
+                percentage at once
+              </li>
+              <li>
+                <strong>Scale Comparison:</strong> Compare character height to
+                real-world references and fantasy races
+              </li>
+              <li>
+                <strong>Prompt Injection:</strong> Automatically inject stats
+                and scale info into your prompts
+              </li>
+              <li>
+                <strong>Per-Character:</strong> Each character has independent
+                stat tracking
+              </li>
+            </ul>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>Quick Start Guide</h4>
+            <ol>
+              <li>Click "Enable Stats" in the stats panel (bottom right)</li>
+              <li>Click "+ Stat" to add your first stat</li>
+              <li>Enter stat name (e.g., "height", "strength", "health")</li>
+              <li>
+                Enter the value (numbers work best for growth mechanics)
+              </li>
+              <li>View stats organized by category in the panel</li>
+              <li>
+                Use "Grow Stats" to increase numeric values by a percentage
+              </li>
+              <li>Use "Scale Compare" to see height comparisons</li>
+            </ol>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>Height Scales & References</h4>
+            <p>
+              The extension includes built-in height references for comparison:
+            </p>
+            <table class="settings-table">
+              <tr>
+                <th>Reference</th>
+                <th>Height</th>
+              </tr>
+              <tr>
+                <td>Average Human</td>
+                <td>5.8 ft (177 cm)</td>
+              </tr>
+              <tr>
+                <td>Short Human</td>
+                <td>5.0 ft (152 cm)</td>
+              </tr>
+              <tr>
+                <td>Tall Human</td>
+                <td>6.5 ft (198 cm)</td>
+              </tr>
+              <tr>
+                <td>Giant (D&D)</td>
+                <td>10.0 ft (304 cm)</td>
+              </tr>
+              <tr>
+                <td>Dwarf (D&D)</td>
+                <td>4.0 ft (122 cm)</td>
+              </tr>
+              <tr>
+                <td>Elf (D&D)</td>
+                <td>5.5 ft (168 cm)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>Stat Categories</h4>
+            <p>Stats are automatically sorted into these categories:</p>
+            <ul>
+              <li>
+                <strong>Physical:</strong> height, weight, strength, endurance
+              </li>
+              <li>
+                <strong>Mental:</strong> intelligence, wisdom, charisma,
+                perception
+              </li>
+              <li>
+                <strong>Skills:</strong> combat, magic, crafting, diplomacy
+              </li>
+              <li><strong>Other:</strong> luck, health, and custom stats</li>
+            </ul>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>How Prompt Injection Works</h4>
+            <p>
+              When stats tracking is enabled, the extension automatically
+              injects character stats into your prompts as:
+            </p>
+            <code style="display: block; background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0;">
+              [Character Stats: Height: 6.5 ft, Strength: 18, Health: 100 HP]
+            </code>
+            <p>
+              When you use "Scale Compare" and inject, it adds height
+              references:
+            </p>
+            <code style="display: block; background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0;">
+              [Character Physical Reference: This character is 6.5 feet tall.
+              That is 1.12x the height of an Average Human...]
+            </code>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>Tips & Tricks</h4>
+            <ul>
+              <li>
+                Use decimal numbers for height (e.g., 5.8 for 5 ft 10 in)
+              </li>
+              <li>
+                Numeric stats can be grown; text stats cannot (create a skill
+                level for growth)
+              </li>
+              <li>Growth history is tracked per character</li>
+              <li>
+                Stats are stored locally per character and persisted across
+                sessions
+              </li>
+              <li>
+                The extension works best with a character's description or
+                persona
+              </li>
+              <li>You can customize stat names and values anytime</li>
+            </ul>
+          </div>
+
+          <div class="settings-subsection">
+            <h4>Support & Feedback</h4>
+            <p>
+              For issues, feature requests, or questions, please visit the
+              extension repository on GitHub or post on the SillyTavern Discord.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #character-stats-settings .settings-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      background: #f9f9f9;
+    }
+
+    #character-stats-settings .settings-table th,
+    #character-stats-settings .settings-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    #character-stats-settings .settings-table th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+
+    #character-stats-settings .settings-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #character-stats-settings .settings-subsection {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #ddd;
+    }
+
+    #character-stats-settings code {
+      font-family: "Courier New", monospace;
+      font-size: 0.9em;
+      color: #333;
+    }
+
+    #character-stats-settings ul,
+    #character-stats-settings ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    #character-stats-settings li {
+      margin: 5px 0;
+    }
+
+    #character-stats-settings p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    #character-stats-settings h4 {
+      margin: 15px 0 10px 0;
+      color: #333;
+    }
+  </style>
+</div>
