@@ -81,27 +81,16 @@ npm install
 
 ### Quick Start
 1. Open SillyTavern and select a character
-2. Look for the **Character Stats** panel in the **bottom-right corner**
-3. Click the checkbox next to "Enable Stats"
+2. Look for the **Character Stats** panel in the **top-left corner**
 4. Click **+ Stat** to add your first stat
 5. Enter stat name (e.g., "height", "strength")
 6. Enter the value (e.g., 6, 18)
 7. Stats appear organized by category in the panel
 
-### Panel Controls
-- Click **_** to **minimize** the panel (hides to left edge, hover to restore)
-- Click **−** to **collapse/expand** the panel content (saves screen space)
-- Panel remembers its state between sessions
-
 ### Adding Stats
 - Click **+ Stat**
 - Enter the stat name (spaces will be converted to underscores)
 - Enter the value (can be a number or text)
-- Stats are automatically categorized:
-  - **Physical**: height, weight, strength, endurance
-  - **Mental**: intelligence, wisdom, charisma, perception
-  - **Skills**: combat, magic, crafting, diplomacy
-  - **Other**: luck, health, or any custom stat
 
 ### Growing Stats
 1. Click **Grow Stats**
@@ -207,34 +196,7 @@ Found a bug? Have a feature idea? Contributions are welcome!
 
 ## License
 
-This extension is released under the AGPL-3.0 License - see LICENSE file for details.
-
-## Changelog
-
-### Version 1.1.0
-- **Added minimize button** to hide panel to left edge
-- Improved panel collapse/expand functionality
-- Added tooltips to control buttons
-- Better minimize animation and hover effects
-- References to official SillyTavern documentation at https://docs.sillytavern.app/
-
-### Version 1.0.0
-- Initial release
-- Stat tracking system
-- Growth mechanics
-- Real-world scale comparisons
-- Prompt injection
-- Per-character stat storage
-- Responsive UI with dark/light mode
-
-## Acknowledgments
-
-- SillyTavern team for the amazing platform
-- Community feedback and suggestions
-- Inspired by RPG stat systems and character progression
-- Official documentation: https://github.com/SillyTavern/SillyTavern-Docs
-
----
+This extension is released under the MIT License - see LICENSE file for details.
 
 **Made with ❤️ for the SillyTavern community**
 
