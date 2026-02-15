@@ -178,11 +178,6 @@
   const DEFAULT_STATS = [
     { name: "Height", unit: " ft" },
     { name: "Weight", unit: " lbs" },
-    { name: "Penis Length", unit: " in" },
-    { name: "Penis Girth", unit: " in" },
-    { name: "Breast Cup Size", unit: "" },
-    { name: "Pussy Depth", unit: " in" },
-    { name: "Pussy Width", unit: " in" },
   ];
 
   function addDefaultStat(name, unit) {
@@ -306,13 +301,31 @@
   ];
 
   function findClosestMatches(statValue, unit) {
-    // Convert to cm
+    // Normalize unit to lowercase and trim
+    const normalizedUnit = unit.toLowerCase().trim();
+    
+    // Convert to cm as base unit
     let valueCm = statValue;
-
-    if (unit.includes("ft")) valueCm = statValue * 30.48;
-    else if (unit.includes("in")) valueCm = statValue * 2.54;
-    else if (unit.includes("m")) valueCm = statValue * 100;
-    else if (unit.includes("mm")) valueCm = statValue / 10;
+    
+    // Handle various unit formats
+    if (normalizedUnit.includes("mm")) {
+      valueCm = statValue / 10;  // 1mm = 0.1cm
+    } else if (normalizedUnit.includes("cm")) {
+      valueCm = statValue;  // 1cm = 1cm
+    } else if (normalizedUnit.includes("m") && !normalizedUnit.includes("mm") && !normalizedUnit.includes("mi")) {
+      valueCm = statValue * 100;  // 1m = 100cm
+    } else if (normalizedUnit.includes("km")) {
+      valueCm = statValue * 100000;  // 1km = 100,000cm
+    } else if (normalizedUnit.includes("in")) {
+      valueCm = statValue * 2.54;  // 1 inch = 2.54cm
+    } else if (normalizedUnit.includes("ft")) {
+      valueCm = statValue * 30.48;  // 1 ft = 30.48cm
+    } else if (normalizedUnit.includes("mi")) {
+      valueCm = statValue * 160934;  // 1 mile = 160,934cm
+    } else {
+      // If no unit recognized, assume cm
+      valueCm = statValue;
+    }
 
     if (!valueCm || valueCm <= 0) return [];
 
@@ -357,22 +370,44 @@
       return;
     }
 
-    const matches = findClosestMatches(
-      typeof statToCompare === "object" ? statToCompare.value : statToCompare,
-      typeof statToCompare === "object" ? statToCompare.unit : ""
-    );
+    const statValue = typeof statToCompare === "object" ? statToCompare.value : statToCompare;
+    const statUnit = typeof statToCompare === "object" ? statToCompare.unit : "";
+
+    const matches = findClosestMatches(statValue, statUnit);
+
+    // Convert stat value to cm for ratio calculation
+    const normalizedUnit = statUnit.toLowerCase().trim();
+    let valueCm = statValue;
+    
+    if (normalizedUnit.includes("mm")) {
+      valueCm = statValue / 10;
+    } else if (normalizedUnit.includes("cm")) {
+      valueCm = statValue;
+    } else if (normalizedUnit.includes("m") && !normalizedUnit.includes("mm") && !normalizedUnit.includes("mi")) {
+      valueCm = statValue * 100;
+    } else if (normalizedUnit.includes("km")) {
+      valueCm = statValue * 100000;
+    } else if (normalizedUnit.includes("in")) {
+      valueCm = statValue * 2.54;
+    } else if (normalizedUnit.includes("ft")) {
+      valueCm = statValue * 30.48;
+    } else if (normalizedUnit.includes("mi")) {
+      valueCm = statValue * 160934;
+    } else {
+      valueCm = statValue;
+    }
 
     let comparisonText = `📏 ${typeof statToCompare === "object" ? statToCompare.name : statKey} Comparisons:\n\n`;
 
     const charName = window?.characters?.[window?.this_chid]?.name || "Character";
 
     for (const match of matches) {
-      const ratio = statToCompare.value / match.cm;
+      const ratio = valueCm / match.cm;
       if (ratio > 1) {
-        const times = ratio.toFixed(1);
+        const times = ratio.toFixed(2);
         comparisonText += `${charName} is ${times}x bigger than ${match.name}\n`;
       } else {
-        const times = (1 / ratio).toFixed(1);
+        const times = (1 / ratio).toFixed(2);
         comparisonText += `${charName} is ${times}x smaller than ${match.name}\n`;
       }
     }
@@ -1039,7 +1074,10 @@
 
   function openEditMode() {
     console.log("[character-stats] 🔧 Opening edit mode");
-    if (editModeActive) return;
+    if (editModeActive) {
+      console.log("[character-stats] ⚠️ Edit mode already active");
+      return;
+    }
     editModeActive = true;
 
     const stats = getCharStats();
@@ -1050,7 +1088,10 @@
     }
 
     const statsList = document.getElementById("cs-stats-list");
-    if (!statsList) return;
+    if (!statsList) {
+      editModeActive = false;
+      return;
+    }
 
     // Hide all stat items
     const statItems = statsList.querySelectorAll("[data-key]");
@@ -1152,8 +1193,14 @@
       saveStats();
       saveToCharacterCard();
       updateDisplay();
-      console.log("[character-stats] ✅ Stats saved");
-      // Keep edit mode open - don't close
+      
+      // Close edit mode after save
+      editRows.forEach(row => row.remove());
+      buttonContainer.remove();
+      statItems.forEach(item => item.style.display = "");
+      editModeActive = false;
+      
+      console.log("[character-stats] ✅ Stats saved and edit mode closed");
     });
   }
 
@@ -1208,11 +1255,6 @@
           <option value="">➕ Add Default Stat</option>
           <option value="height">Height</option>
           <option value="weight">Weight</option>
-          <option value="penis_length">Penis Length</option>
-          <option value="penis_girth">Penis Girth</option>
-          <option value="breast_cup_size">Breast Cup Size</option>
-          <option value="pussy_depth">Pussy Depth</option>
-          <option value="pussy_width">Pussy Width</option>
         </select>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <button id="cs-add" style="padding:8px;background:rgba(74,163,255,0.22);color:rgba(74,163,255,0.92);border:1px solid rgba(74,163,255,0.25);border-radius:10px;cursor:pointer;font-weight:600;font-size:10px;">➕ Add</button>
