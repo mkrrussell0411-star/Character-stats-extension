@@ -25,6 +25,8 @@ A powerful SillyTavern extension that enables comprehensive character stat track
   - D&D Elf (5.5 ft / 168 cm)
 - Prevent unrealistic power scaling (e.g., 6ft character isn't 3x taller than 8ft character)
 - Display comparisons in both feet and centimeters
+### Screenshot of Function
+<img width="1659" height="794" alt="Screenshot 2026-02-15 172850" src="https://github.com/user-attachments/assets/4a4e88b6-5a7c-420e-b902-7a056d40f5ea" />
 
 ### 💬 Prompt Injection
 - Automatically inject stats into prompts when enabled
