@@ -68,6 +68,9 @@
           if (key !== currentCharKey) {
             console.log("[character-stats] 🎭 Character changed");
             currentCharKey = key;
+            if (!statsData[key]) {
+              statsData[key] = {};
+            }
             updateDisplay();
           }
           return key;
@@ -88,22 +91,32 @@
     return statsData[currentCharKey];
   }
 
-  function buildStatsText() {
-    const stats = getCharStats();
-    if (Object.keys(stats).length === 0) return null;
+  function deriveCharKey(rawName) {
+    const USER_ALIASES = ["user", "you", "me", "player"];
+    const normalized = rawName.trim().toLowerCase().replace(/\s+/g, "_");
+    if (USER_ALIASES.includes(normalized)) return "user";
+    return "char_" + normalized;
+  }
 
-    let text = "[Character Stats: ";
-    const parts = [];
-    for (const [k, v] of Object.entries(stats)) {
-      const isObj = typeof v === "object";
-      const name = isObj ? v.name : k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      const value = isObj ? v.value : v;
-      const unit = isObj ? v.unit : "";
-      const val = typeof value === "number" ? value.toFixed(2) + unit : value + unit;
-      parts.push(name + ": " + val);
+  function buildStatsText() {
+    const allKeys = Object.keys(statsData);
+    const blocks = [];
+    for (const key of allKeys) {
+      const bucket = statsData[key];
+      if (!bucket || Object.keys(bucket).length === 0) continue;
+      const label = key === "global" ? "Global" : key === "user" ? "User" : key.replace(/^char_/, "");
+      const parts = [];
+      for (const [k, v] of Object.entries(bucket)) {
+        const isObj  = typeof v === "object";
+        const name   = isObj ? v.name : k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        const value  = isObj ? v.value : v;
+        const unit   = isObj ? v.unit : "";
+        const val    = typeof value === "number" ? value.toFixed(2) + unit : value + unit;
+        parts.push(name + ": " + val);
+      }
+      if (parts.length > 0) blocks.push(`[Character Stats — ${label}: ${parts.join(" | ")}]`);
     }
-    text += parts.join(", ") + "]";
-    return text;
+    return blocks.length > 0 ? blocks.join("\n") : null;
   }
 
   // ========================= STATS CODEBLOCK PARSING =========================
@@ -168,7 +181,18 @@
   }
 
   function applyStatsFromCodeblock(data) {
-    const stats = getCharStats();
+    // Route to the character named in the block, or fall back to currentCharKey
+    const charKeyRaw = Object.keys(data).find(k => k.trim().toLowerCase() === "character");
+    let targetKey;
+    if (charKeyRaw) {
+      const charName = data[charKeyRaw];
+      delete data[charKeyRaw];           // remove before stat loop
+      targetKey = deriveCharKey(charName);
+    } else {
+      targetKey = currentCharKey;
+    }
+    if (!statsData[targetKey]) statsData[targetKey] = {};
+    const stats = statsData[targetKey];
     let changed = false;
     const appliedUpdates = [];
 
@@ -235,45 +259,36 @@
     }
   }
 
-  function getLatestStatsUpdateBlock() {
+  function getAllStatsUpdateBlocks() {
     const codes = Array.from(document.querySelectorAll(".mes pre code"));
+    const results = [];
 
     for (let i = codes.length - 1; i >= 0; i--) {
       const codeEl = codes[i];
       const codeText = (codeEl.textContent || "").trim();
+      if (!codeText.includes("<stats_update>") && !codeText.includes("&lt;stats_update&gt;") && !codeText.includes("stats_update")) continue;
 
-      // Check if code block content contains stats_update (handles HTML entities too)
-      if (codeText.includes("<stats_update>") || codeText.includes("&lt;stats_update&gt;") || codeText.includes("stats_update")) {
-        // Extract just the stats_update content
-        let statsContent = codeText;
-        const startIdx = codeText.indexOf("<stats_update>");
-        const endIdx = codeText.indexOf("</stats_update>");
-
-        if (startIdx !== -1 && endIdx !== -1) {
-          statsContent = codeText.substring(startIdx + 14, endIdx).trim();
-          // Return a pseudo element with the extracted content
-          return { textContent: statsContent };
-        } else if (looksLikeStatsUpdate(codeEl)) {
-          return codeEl;
-        }
+      const startIdx = codeText.indexOf("<stats_update>");
+      const endIdx   = codeText.indexOf("</stats_update>");
+      if (startIdx !== -1 && endIdx !== -1) {
+        results.push({ textContent: codeText.substring(startIdx + 14, endIdx).trim() });
+      } else if (looksLikeStatsUpdate(codeEl)) {
+        results.push(codeEl);
       }
     }
-
-    return null;
+    return results;  // may be empty array
   }
 
   function refreshStatsFromChat() {
     if (!prefs.autoUpdateFromAI) return;
-
-    const codeEl = getLatestStatsUpdateBlock();
-    if (!codeEl) return;
-
-    const text = (codeEl.textContent || "").trim();
-    if (!text) return;
-
-    const data = parseStatsCodeblock(text);
-    if (Object.keys(data).length > 0) {
-      applyStatsFromCodeblock(data);
+    const blocks = getAllStatsUpdateBlocks();
+    for (const block of blocks) {
+      const text = (block.textContent || "").trim();
+      if (!text) continue;
+      const data = parseStatsCodeblock(text);
+      if (Object.keys(data).length > 0) {
+        applyStatsFromCodeblock(data);
+      }
     }
   }
 
@@ -337,12 +352,14 @@ IMPORTANT: After your reply, output a code block with ALL relevant character sta
 
 \`\`\`
 <stats_update>
+Character: Name
 Height: 6.5 ft
 Weight: 180 lbs
 Strength: 18
 </stats_update>
 \`\`\`
 
+If multiple characters have stats, output one <stats_update> block per character.
 Include ONLY actual stats (not examples). One stat per line. Create new stats as needed.`;
 
             if (Array.isArray(payload.messages)) {
@@ -880,7 +897,11 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
       const storageKey = name.toLowerCase().replace(/\s+/g, "_");
       const numVal = parseFloat(value);
 
-      const stats = getCharStats();
+      // Add stat to the currently viewed character tab
+      const stats = statsData[currentCharKey] || {};
+      if (!statsData[currentCharKey]) {
+        statsData[currentCharKey] = stats;
+      }
       stats[storageKey] = {
         value: isNaN(numVal) ? value : numVal,
         unit: displayUnit,
@@ -1005,7 +1026,8 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
         return;
       }
 
-      const stats = getCharStats();
+      // Apply growth to the currently viewed character tab
+      const stats = statsData[currentCharKey] || {};
       let count = 0;
 
       for (const key in stats) {
@@ -1059,7 +1081,10 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
     const list = document.getElementById("cs-stats-list");
     if (!list) return;
 
-    const stats = getCharStats();
+    updateCharacterTabs();
+
+    // Use the stats for the currently selected character tab
+    const stats = statsData[currentCharKey] || {};
     if (Object.keys(stats).length === 0) {
       list.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 11px;">No stats yet</div>';
       return;
@@ -1140,7 +1165,8 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
   }
 
   window.csEditStat = function(key) {
-    const stats = getCharStats();
+    // Edit stat for the currently selected character tab
+    const stats = statsData[currentCharKey] || {};
     const stat = stats[key];
     if (!stat) return;
 
@@ -1301,7 +1327,8 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
     }
     editModeActive = true;
 
-    const stats = getCharStats();
+    // Edit stats for the currently selected character tab
+    const stats = statsData[currentCharKey] || {};
     if (Object.keys(stats).length === 0) {
       alert("⚠️ No stats to edit!");
       editModeActive = false;
@@ -1390,7 +1417,7 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
     saveBtn.addEventListener("click", () => {
       console.log("[character-stats] 💾 Saving edited stats");
       const editRows = statsList.querySelectorAll(".cs-edit-stat-row");
-      const currentStats = getCharStats();
+      const currentStats = statsData[currentCharKey] || {};
 
       for (const row of editRows) {
         const key = row.dataset.key;
@@ -1426,7 +1453,8 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
   }
 
   window.csDeleteStat = function(key) {
-    const stats = getCharStats();
+    // Delete stat from the currently selected character tab
+    const stats = statsData[currentCharKey] || {};
     delete stats[key];
     saveStats();
     saveToCharacterCard();
@@ -1434,9 +1462,69 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
     console.log("[character-stats] 🗑️ Deleted stat:", key);
   };
 
+  function getAllCharacterKeys() {
+    const keys = new Set();
+    for (const key of Object.keys(statsData)) {
+      keys.add(key);
+    }
+    // Add current character if not already present
+    const currentKey = getCurrentCharKey();
+    if (currentKey !== "global") {
+      keys.add(currentKey);
+    }
+    return Array.from(keys).sort((a, b) => {
+      const primary = currentCharKey;
+      if (a === primary && a !== "global") return -1;
+      if (b === primary && b !== "global") return 1;
+      if (a === "user")  return -1;
+      if (b === "user")  return 1;
+      if (a === "global") return 1;
+      if (b === "global") return -1;
+      return a.localeCompare(b);
+    });
+  }
+
+  function switchCharacterTab(charKey) {
+    currentCharKey = charKey;
+    updateDisplay();
+    updateCharacterTabs();
+  }
+
+  function updateCharacterTabs() {
+    const tabContainer = document.getElementById("cs-char-tabs");
+    if (!tabContainer) return;
+
+    const allKeys = getAllCharacterKeys();
+    const currentKey = currentCharKey;
+
+    tabContainer.innerHTML = "";
+    allKeys.forEach((key) => {
+      const tab = document.createElement("button");
+      const charName = key === "global" ? "Global"
+                     : key === "user"   ? "User"
+                     : key.replace(/^char_/, "");
+      tab.textContent = charName;
+      tab.style.cssText = `
+        padding: 6px 10px;
+        font-size: 10px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.1);
+        cursor: pointer;
+        white-space: nowrap;
+        ${key === currentKey
+          ? "background:rgba(100,180,255,0.25);color:rgba(150,200,255,0.95);border-color:rgba(100,180,255,0.4);"
+          : "background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.65);"}
+        transition: all 120ms ease;
+      `;
+      tab.addEventListener("click", () => switchCharacterTab(key));
+      tabContainer.appendChild(tab);
+    });
+  }
+
   function buildUI() {
     console.log("[character-stats] 🎨 Building UI...");
-    
+
     const root = document.createElement("div");
     root.id = "cs-root";
     root.style.cssText = "position:fixed;top:0;left:0;height:100vh;z-index:9999;pointer-events:none;";
@@ -1454,6 +1542,7 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
       <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.06);">
         <h3 style="margin:0;font-size:13px;font-weight:650;letter-spacing:0.2px;color:rgba(255,255,255,0.92);">⚔️ Character Stats</h3>
       </div>
+      <div id="cs-char-tabs" style="display:flex;gap:4px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.06);"></div>
       <div style="padding:10px 12px 12px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px;">
         <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.08);">
           <label style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;">

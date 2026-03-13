@@ -34,12 +34,14 @@ A powerful SillyTavern extension that enables comprehensive character stat track
 - Inject scale comparison data for height context
 - Seamless integration with SillyTavern's prompt system
 - **Auto-update stats from AI responses**: AI can output structured stats updates that are automatically parsed and applied
-  - AI outputs stats in code blocks: `<stats_update>Height: 6.5 ft\nWeight: 180 lbs</stats_update>`
+  - AI outputs stats in code blocks with optional character routing: `<stats_update>Character: Name\nHeight: 6.5 ft\nWeight: 180 lbs</stats_update>`
   - Extension automatically updates existing stats or creates new ones
+  - Multiple characters in one response: one `<stats_update>` block per character
   - Can be toggled on/off in settings
 
 ### 🎨 User Interface
 - Floating stats panel (top-left corner, minimizable)
+- **Per-character tabs**: View and edit stats for multiple characters in the same conversation (the main character, user, and any NPCs)
 - Responsive design for mobile devices
 - Light/dark mode support
 
@@ -83,15 +85,18 @@ npm install
 ### Quick Start
 1. Open SillyTavern and select a character
 2. Look for the **Character Stats** panel in the **top-left corner**
-4. Click **+ Stat** to add your first stat
+3. Click a **character tab** to view that character's stats (main character, User, or NPCs)
+4. Click **+ Stat** to add your first stat to the selected tab
 5. Enter stat name (e.g., "height", "strength")
 6. Enter the value (e.g., 6, 18)
 
 ### Adding Stats
+- Click a **character tab** to select which character gets the stat
 - Click **+ Stat**
 - Enter the stat name (spaces will be converted to underscores)
 - Enter the value (can be a number or text)
 - Enter Unit Of Measurment (optional)
+- Stats are saved per-character and isolated from other characters' stats
 
 ### Growing Stats
 1. Click **Grow Stats**
@@ -131,48 +136,76 @@ Elf (D&D): 1.18x taller
 ### Auto-Update Stats from AI
 1. In Settings, enable **"Auto-update stats from AI `<stats_update>` blocks"**
 2. When you generate a response, the extension instructs the AI to output stats in a structured format
-3. The AI responds with stats in a code block:
+3. The AI responds with stats in code blocks, one per character:
    ```
    <stats_update>
+   Character: Emily
    Height: 6.5 ft
    Weight: 180 lbs
    Strength: 18
    </stats_update>
+
+   <stats_update>
+   Character: Bob
+   Height: 5.8 ft
+   Strength: 16
+   </stats_update>
    ```
-4. The extension automatically parses this block and:
+4. The extension automatically parses these blocks and:
+   - **Routes stats to the correct character** based on the `Character: Name` line
    - **Updates existing stats** with new values
    - **Creates new stats** if they don't exist in the tracker
+   - **Creates new character tabs** for NPCs mentioned in stats updates
    - Preserves units (ft, lbs, etc.)
+   - If no `Character:` line is present, stats update the currently active SillyTavern character
 
 Example:
 ```
 AI Output:
 <stats_update>
+Character: Emily
 Height: 7.0 ft
 Weight: 200 lbs
 </stats_update>
 
+<stats_update>
+Character: Bob
+Height: 5.9 ft
+Strength: 17
+</stats_update>
+
 Result:
-- Height updated: 6.5 ft → 7.0 ft
-- Weight updated: 180 lbs → 200 lbs
+- Emily's Height updated: 6.5 ft → 7.0 ft
+- Emily's Weight updated: 180 lbs → 200 lbs
+- Bob's Height created: 5.9 ft (new)
+- Bob's Strength created: 17 (new)
+- Two tabs appear: Emily and Bob
 ```
 
+### Character Name Routing
+The `Character: Name` line in `<stats_update>` blocks determines which character receives the stats:
+- `Character: You`, `Character: Me`, `Character: Player`, or `Character: User` → User tab
+- `Character: Emily`, `Character: Bob`, etc. → Creates/updates character-specific tabs
+- No `Character:` line → Stats go to the current SillyTavern character
+
 ### Reset All Stats
+- Click a **character tab** to select which character's stats to reset
 - Click **Reset**
 - Confirm the action
-- All stats for the current character are deleted
+- All stats for the selected character tab are deleted (other characters' stats are unaffected)
 - ⚠️ This action cannot be undone
 
 ## How Prompt Injection Works
 
 ### Automatic Stat Injection
-When "Enable Stats" is checked, stats are automatically added to the prompt in this format:
+When "Enable Stats" is checked, stats from all characters are automatically added to the prompt in labeled blocks:
 
 ```
-[Character Stats: Height: 6.5 ft, Strength: 18, Health: 100 HP, Intelligence: 14]
+[Character Stats — Emily: Height: 6.5 ft | Strength: 18 | Health: 100 HP]
+[Character Stats — User: Intelligence: 14 | Wisdom: 16]
 ```
 
-This helps the AI understand your character's capabilities and appearance.
+This helps the AI understand all characters' capabilities and appearance simultaneously.
 
 ### Scale Comparison Injection
 When you click "Inject into Prompt" in the Scale Compare dialog:
@@ -208,11 +241,13 @@ This ensures consistent scaling in the AI's responses.
 
 ### AI Auto-Update Not Working
 - Verify "Auto-update stats from AI" is enabled in Settings
-- Check that the AI is actually outputting the `<stats_update>` block in its response
+- Check that the AI is actually outputting the `<stats_update>` blocks in its response
+- Ensure each block includes a `Character: Name` line (or at least the first line after `<stats_update>`)
 - Ensure stats are named consistently with what the AI outputs
 - Open browser console (F12) and look for `[character-stats]` logs
 - The AI model must support the prompt instruction (GPT-4, Claude, etc. work best)
 - Try manually calling `csRefreshStats()` in browser console to test parsing
+- If multiple characters aren't creating separate tabs, check that each has its own `<stats_update>` block
 
 ## Contributing
 
