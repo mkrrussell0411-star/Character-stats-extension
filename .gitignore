@@ -1,0 +1,30 @@
+# Implementation notes (internal use only)
+IMPLEMENTATION_SUMMARY.md
+
+# Submodules/Related extensions
+Carmy-InfoBoard/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+~*
