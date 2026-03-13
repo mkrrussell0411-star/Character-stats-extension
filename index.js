@@ -1638,8 +1638,19 @@ Include ONLY actual stats (not examples). One stat per line. Create new stats as
     });
 
     document.getElementById("cs-reset").addEventListener("click", () => {
-      if (confirm("🗑️ Reset all stats?")) {
-        statsData[currentCharKey] = {};
+      if (confirm("🗑️ Reset ALL character tabs? Only the global tab will remain.")) {
+        // Clear all tabs except global
+        for (const key of Object.keys(statsData)) {
+          if (key !== "global") {
+            delete statsData[key];
+          } else {
+            statsData[key] = {};
+          }
+        }
+        // If current key was deleted, switch to global
+        if (!statsData[currentCharKey]) {
+          currentCharKey = "global";
+        }
         saveStats();
         updateDisplay();
       }
