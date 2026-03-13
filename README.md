@@ -28,6 +28,9 @@ A powerful SillyTavern extension that enables comprehensive character stat track
 ### Screenshot of Function
 <img width="1659" height="794" alt="Screenshot 2026-02-15 172850" src="https://github.com/user-attachments/assets/4a4e88b6-5a7c-420e-b902-7a056d40f5ea" />
 
+### Screenshot Of New Features
+<img width="1659" height="794" alt="Image" src="https://github.com/user-attachments/assets/65847b1e-7d21-4482-84b8-a1c0946f1bdf" />
+
 ### 💬 Prompt Injection & AI Auto-Update
 - Automatically inject stats into prompts when enabled
 - Format: `[Character Stats: Height: 6.5 ft, Strength: 18, Health: 100 HP]`
@@ -274,3 +277,4 @@ This extension is released under the MIT License - see LICENSE file for details.
 
 For official SillyTavern extension documentation: https://docs.sillytavern.app/for-contributors/writing-extensions/
 For SillyTavern documentation repo: https://github.com/SillyTavern/SillyTavern-Docs
+
