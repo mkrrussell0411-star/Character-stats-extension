@@ -28,11 +28,15 @@ A powerful SillyTavern extension that enables comprehensive character stat track
 ### Screenshot of Function
 <img width="1659" height="794" alt="Screenshot 2026-02-15 172850" src="https://github.com/user-attachments/assets/4a4e88b6-5a7c-420e-b902-7a056d40f5ea" />
 
-### 💬 Prompt Injection
+### 💬 Prompt Injection & AI Auto-Update
 - Automatically inject stats into prompts when enabled
 - Format: `[Character Stats: Height: 6.5 ft, Strength: 18, Health: 100 HP]`
 - Inject scale comparison data for height context
 - Seamless integration with SillyTavern's prompt system
+- **Auto-update stats from AI responses**: AI can output structured stats updates that are automatically parsed and applied
+  - AI outputs stats in code blocks: `<stats_update>Height: 6.5 ft\nWeight: 180 lbs</stats_update>`
+  - Extension automatically updates existing stats or creates new ones
+  - Can be toggled on/off in settings
 
 ### 🎨 User Interface
 - Floating stats panel (top-left corner, minimizable)
@@ -124,6 +128,35 @@ Elf (D&D): 1.18x taller
 - Click the **✕** button next to any stat to remove it
 - Stats are removed immediately and can be re-added
 
+### Auto-Update Stats from AI
+1. In Settings, enable **"Auto-update stats from AI `<stats_update>` blocks"**
+2. When you generate a response, the extension instructs the AI to output stats in a structured format
+3. The AI responds with stats in a code block:
+   ```
+   <stats_update>
+   Height: 6.5 ft
+   Weight: 180 lbs
+   Strength: 18
+   </stats_update>
+   ```
+4. The extension automatically parses this block and:
+   - **Updates existing stats** with new values
+   - **Creates new stats** if they don't exist in the tracker
+   - Preserves units (ft, lbs, etc.)
+
+Example:
+```
+AI Output:
+<stats_update>
+Height: 7.0 ft
+Weight: 200 lbs
+</stats_update>
+
+Result:
+- Height updated: 6.5 ft → 7.0 ft
+- Weight updated: 180 lbs → 200 lbs
+```
+
 ### Reset All Stats
 - Click **Reset**
 - Confirm the action
@@ -172,6 +205,14 @@ This ensures consistent scaling in the AI's responses.
 - Check browser's local storage is enabled
 - Ensure SillyTavern can write to its data folder
 - Try exporting stats before troubleshooting
+
+### AI Auto-Update Not Working
+- Verify "Auto-update stats from AI" is enabled in Settings
+- Check that the AI is actually outputting the `<stats_update>` block in its response
+- Ensure stats are named consistently with what the AI outputs
+- Open browser console (F12) and look for `[character-stats]` logs
+- The AI model must support the prompt instruction (GPT-4, Claude, etc. work best)
+- Try manually calling `csRefreshStats()` in browser console to test parsing
 
 ## Contributing
 

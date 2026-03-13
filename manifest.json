@@ -1,8 +1,8 @@
 {
   "display_name": "Character Stats & Growth",
   "author": "Community",
-  "version": "3.0",
-  "description": "Track character stats and inject them into prompts via fetch wrapper",
+  "version": "3.1.0",
+  "description": "Track character stats, watch them grow, and auto-update from AI responses. Inject stats into prompts with real-world scale comparisons.",
   "js": ["index.js"],
   "css": ["styles.css"],
   "settings_html": "settings.html"

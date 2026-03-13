@@ -158,6 +158,22 @@
           </div>
 
           <div class="settings-subsection">
+            <h4>Auto-Update from AI</h4>
+            <p>
+              Enable automatic stat updates from structured AI responses:
+            </p>
+            <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+              <input type="checkbox" id="autoUpdateFromAI" style="cursor: pointer;" />
+              <span>Auto-update stats from AI <code>&lt;stats_update&gt;</code> blocks</span>
+            </label>
+            <p style="font-size: 0.9em; color: #666;">
+              When enabled, the extension instructs the AI to output structured stats updates
+              like <code>&lt;stats_update&gt;Height: 6.5 ft&lt;/stats_update&gt;</code>, which
+              are automatically parsed and applied to your character stats.
+            </p>
+          </div>
+
+          <div class="settings-subsection">
             <h4>Support & Feedback</h4>
             <p>
               For issues, feature requests, or questions, please visit the

@@ -16,6 +16,7 @@
     enabled: true,
     autoInject: true,
     injectRole: "system",
+    autoUpdateFromAI: true,
   };
 
   let statsData = {};
@@ -105,6 +106,180 @@
     return text;
   }
 
+  // ========================= STATS CODEBLOCK PARSING =========================
+  function looksLikeStatsUpdate(codeEl) {
+    // Check if parent structure contains <stats_update>
+    const parent = codeEl.closest?.("stats_update") ||
+      codeEl.parentElement?.closest?.("[data-tag='stats_update']");
+    if (parent) {
+      console.log("[character-stats] 🔍 Found stats update block by parent tag");
+      return true;
+    }
+
+    // Check if the codeblock text contains known stat keys
+    const text = (codeEl.textContent || "").trim();
+    const stats = getCharStats();
+    const knownKeys = Object.values(stats).map(v =>
+      (typeof v === "object" ? v.name : "").toLowerCase()
+    ).filter(Boolean);
+    if (knownKeys.length === 0) {
+      console.log("[character-stats] 🔍 No known stats to match against");
+      return false;
+    }
+    const hits = knownKeys.filter(k => new RegExp(`^${k}:`, "i").test(text));
+    if (hits.length >= 1) {
+      console.log("[character-stats] 🔍 Found stats update block by pattern match:", hits);
+      return true;
+    }
+    console.log("[character-stats] 🔍 Code block doesn't look like stats update");
+    return false;
+  }
+
+  function parseStatsCodeblock(text) {
+    const updates = {};
+    const lines = text.split("\n");
+
+    // Skip lines that are clearly examples or instructions
+    const examplePatterns = [
+      /^StatName/i,
+      /^example/i,
+      /^e\.g\./i,
+      /^\(/,
+      /^\[/,
+    ];
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+
+      // Skip if matches example pattern
+      if (examplePatterns.some(pattern => pattern.test(line))) continue;
+
+      const idx = line.indexOf(":");
+      if (idx === -1) continue;
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
+      if (!key || !val) continue;
+
+      updates[key] = val;
+    }
+    console.log("[character-stats] 📝 Parsed stats codeblock:", updates);
+    return updates;
+  }
+
+  function applyStatsFromCodeblock(data) {
+    const stats = getCharStats();
+    let changed = false;
+    const appliedUpdates = [];
+
+    for (const [parsedKey, parsedVal] of Object.entries(data)) {
+      let found = false;
+
+      // Try to find matching stat by name (case-insensitive)
+      for (const [statKey, statEntry] of Object.entries(stats)) {
+        const statName = typeof statEntry === "object" ? statEntry.name : statKey.replace(/_/g, " ");
+        if (statName.toLowerCase() !== parsedKey.toLowerCase()) continue;
+
+        found = true;
+        // Extract numeric value
+        const numMatch = String(parsedVal).match(/^([+-]?\d+\.?\d*)/);
+        const oldValue = typeof statEntry === "object" ? statEntry.value : statEntry;
+
+        if (numMatch && typeof statEntry === "object" && typeof statEntry.value === "number") {
+          const newValue = parseFloat(numMatch[1]);
+          statEntry.value = newValue;
+          appliedUpdates.push(`${statName}: ${oldValue} → ${newValue}`);
+          changed = true;
+        } else if (typeof statEntry !== "object") {
+          stats[statKey] = parsedVal;
+          appliedUpdates.push(`${statName}: ${oldValue} → ${parsedVal}`);
+          changed = true;
+        }
+        break;
+      }
+
+      // If stat doesn't exist, create a new one
+      if (!found) {
+        const statKey = parsedKey.toLowerCase().replace(/\s+/g, "_");
+        const numMatch = String(parsedVal).match(/^([+-]?\d+\.?\d*)/);
+
+        if (numMatch) {
+          // Create numeric stat
+          stats[statKey] = {
+            value: parseFloat(numMatch[1]),
+            unit: parsedVal.replace(/^[+-]?\d+\.?\d*/, "").trim(),
+            name: parsedKey,
+          };
+          appliedUpdates.push(`${parsedKey}: (new) = ${parsedVal}`);
+        } else {
+          // Create text stat
+          stats[statKey] = {
+            value: parsedVal,
+            unit: "",
+            name: parsedKey,
+          };
+          appliedUpdates.push(`${parsedKey}: (new) = ${parsedVal}`);
+        }
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      console.log("[character-stats] 🎯 Applying AI codeblock updates:", appliedUpdates);
+      saveStats();
+      saveToCharacterCard();
+      updateDisplay();
+      console.log("[character-stats] ✅ Stats updated and saved from AI codeblock");
+    } else {
+      console.log("[character-stats] ℹ️ No changes needed in stats");
+    }
+  }
+
+  function getLatestStatsUpdateBlock() {
+    const codes = Array.from(document.querySelectorAll(".mes pre code"));
+
+    for (let i = codes.length - 1; i >= 0; i--) {
+      const codeEl = codes[i];
+      const codeText = (codeEl.textContent || "").trim();
+
+      // Check if code block content contains stats_update (handles HTML entities too)
+      if (codeText.includes("<stats_update>") || codeText.includes("&lt;stats_update&gt;") || codeText.includes("stats_update")) {
+        // Extract just the stats_update content
+        let statsContent = codeText;
+        const startIdx = codeText.indexOf("<stats_update>");
+        const endIdx = codeText.indexOf("</stats_update>");
+
+        if (startIdx !== -1 && endIdx !== -1) {
+          statsContent = codeText.substring(startIdx + 14, endIdx).trim();
+          // Return a pseudo element with the extracted content
+          return { textContent: statsContent };
+        } else if (looksLikeStatsUpdate(codeEl)) {
+          return codeEl;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function refreshStatsFromChat() {
+    if (!prefs.autoUpdateFromAI) return;
+
+    const codeEl = getLatestStatsUpdateBlock();
+    if (!codeEl) return;
+
+    const text = (codeEl.textContent || "").trim();
+    if (!text) return;
+
+    const data = parseStatsCodeblock(text);
+    if (Object.keys(data).length > 0) {
+      applyStatsFromCodeblock(data);
+    }
+  }
+
+  // Export for manual testing
+  window.csRefreshStats = refreshStatsFromChat;
+
   // ========================= FETCH WRAPPER =========================
   function wrapFetch() {
     if (fetchWrapped) return;
@@ -119,8 +294,14 @@
         const isGeneration =
           method === "POST" &&
           url.includes("/api/") &&
-          (url.includes("generate") || url.includes("chat") || url.includes("completion")) &&
-          !url.includes("settings");
+          (url.includes("generate") || url.includes("completion")) &&
+          !url.includes("settings") &&
+          !url.includes("/chats/save");
+
+        if (isGeneration) {
+          console.log("[character-stats] 🌐 Generation request detected:", url);
+          console.log("[character-stats] 📊 Prefs state - enabled:", prefs.enabled, ", autoInject:", prefs.autoInject);
+        }
 
         if (!isGeneration) return originalFetch(input, init);
 
@@ -133,35 +314,64 @@
           init.method = method;
         }
 
-        if (!body || typeof body !== "string") return originalFetch(input, init);
+        if (!body || typeof body !== "string") {
+          console.log("[character-stats] ⚠️ No body or invalid body type");
+          return originalFetch(input, init);
+        }
 
         let payload;
         try {
           payload = JSON.parse(body);
-        } catch {
+        } catch (e) {
+          console.log("[character-stats] ⚠️ Failed to parse payload:", e.message);
           return originalFetch(input, init);
         }
 
         if (prefs.enabled && prefs.autoInject) {
           const statsText = buildStatsText();
           if (statsText) {
+            console.log("[character-stats] 📤 Preparing to inject stats into generation request");
             const role = prefs.injectRole === "user" ? "user" : "system";
+            const statsUpdatePrompt = `<!--STATS_UPDATE_PROMPT-->
+IMPORTANT: After your reply, output a code block with ALL relevant character stats in this exact format:
+
+\`\`\`
+<stats_update>
+Height: 6.5 ft
+Weight: 180 lbs
+Strength: 18
+</stats_update>
+\`\`\`
+
+Include ONLY actual stats (not examples). One stat per line. Create new stats as needed.`;
 
             if (Array.isArray(payload.messages)) {
               const hasStats = payload.messages.some((m) => (m?.content || "").includes(STATS_MARKER));
               if (!hasStats) {
-                payload.messages.push({ role, content: STATS_MARKER + "\n" + statsText });
-                console.log("[character-stats] ✅ Injected");
+                const injectedContent = STATS_MARKER + "\n" + statsText + "\n\n" + statsUpdatePrompt;
+                payload.messages.push({ role, content: injectedContent });
                 init.body = JSON.stringify(payload);
+                console.log("[character-stats] ✅ Injected stats + update prompt into messages");
+                console.log("[character-stats] 📨 Injected content preview:", injectedContent.substring(0, 200) + "...");
+              } else {
+                console.log("[character-stats] ℹ️ Stats already in messages, skipping injection");
               }
             } else if (typeof payload.prompt === "string") {
               if (!payload.prompt.includes(STATS_MARKER)) {
-                payload.prompt += "\n\n" + STATS_MARKER + "\n" + statsText;
-                console.log("[character-stats] ✅ Injected");
+                payload.prompt += "\n\n" + STATS_MARKER + "\n" + statsText + "\n\n" + statsUpdatePrompt;
+                console.log("[character-stats] ✅ Injected stats + update prompt into prompt");
                 init.body = JSON.stringify(payload);
+              } else {
+                console.log("[character-stats] ℹ️ Stats already in prompt, skipping injection");
               }
+            } else {
+              console.log("[character-stats] ⚠️ Payload format not recognized (no messages or prompt)");
             }
+          } else {
+            console.log("[character-stats] ℹ️ No stats to inject (no stats defined yet)");
           }
+        } else {
+          console.log("[character-stats] ℹ️ Stats injection disabled (enabled:", prefs.enabled, ", autoInject:", prefs.autoInject, ")");
         }
 
         return originalFetch(input, init);
@@ -419,18 +629,29 @@
     // Watch for chat messages
     const observer = new MutationObserver(() => {
       try {
-        parseChatForStats();
+        requestAnimationFrame(() => {
+          parseChatForStats();  // existing regex-based parsing
+          refreshStatsFromChat();  // new structured codeblock parsing
+        });
       } catch (e) {
         console.error("[character-stats] Error parsing chat:", e);
       }
     });
 
-    // Observe chat container
-    const chatContainer = document.querySelector('.mes_text') || document.querySelector('[data-type="chat"]') || document.body;
+    // Observe chat container - try multiple selectors for different ST versions
+    let chatContainer = document.querySelector('#chat') ||
+                        document.querySelector('.chat-area') ||
+                        document.querySelector('[data-type="chat"]') ||
+                        document.querySelector('.mes_text') ||
+                        document.body;
+
+    console.log("[character-stats] 🔎 Looking for chat container...");
+    console.log("[character-stats] 📍 Found container:", chatContainer?.className || chatContainer?.tagName, chatContainer?.id);
+
     observer.observe(chatContainer, {
       childList: true,
       subtree: true,
-      characterData: true,
+      characterData: false,
     });
 
     console.log("[character-stats] ✅ Chat monitoring started");
@@ -1299,6 +1520,15 @@
       prefs.injectRole = e.target.value;
       savePrefs();
     });
+
+    const autoUpdateCheckbox = document.getElementById("autoUpdateFromAI");
+    if (autoUpdateCheckbox) {
+      autoUpdateCheckbox.checked = prefs.autoUpdateFromAI;
+      autoUpdateCheckbox.addEventListener("change", (e) => {
+        prefs.autoUpdateFromAI = e.target.checked;
+        savePrefs();
+      });
+    }
 
     document.getElementById("cs-add").addEventListener("click", openAddStatDialog);
     document.getElementById("cs-grow").addEventListener("click", openGrowDialog);
